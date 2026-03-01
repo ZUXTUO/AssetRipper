@@ -32,9 +32,6 @@ public abstract partial class PlatformGameStructure
 	/// <summary>AssemblyName : AssemblyPath</summary>
 	public Dictionary<string, string> Assemblies { get; } = [];
 
-	protected static readonly Regex s_levelTemplate = LevelTemplateRegex();
-	protected static readonly Regex s_sharedAssetTemplate = SharedAssetTemplateRegex();
-
 	protected const string DataFolderName = "Data";
 	protected const string ManagedName = "Managed";
 	protected const string LibName = "lib";
@@ -81,8 +78,8 @@ public abstract partial class PlatformGameStructure
 			fileName == GlobalGameManagersName ||
 			fileName == GlobalGameManagerAssetsName ||
 			fileName == ResourcesAssetsName ||
-			s_levelTemplate.IsMatch(fileName) ||
-			s_sharedAssetTemplate.IsMatch(fileName))
+			LevelTemplateRegex.IsMatch(fileName) ||
+			SharedAssetTemplateRegex.IsMatch(fileName))
 		{
 			return true;
 		}
@@ -165,7 +162,7 @@ public abstract partial class PlatformGameStructure
 	{
 		Logger.Info(LogCategory.Import, "Collecting game files...");
 		CollectCompressedGameFiles(root, files);
-		CollectSerializedGameFiles(root, files);
+		CollectDefaultSerializedFiles(root, files);
 	}
 
 	/// <summary>
@@ -194,7 +191,10 @@ public abstract partial class PlatformGameStructure
 	/// <summary>
 	/// Collects global game managers and all the level files
 	/// </summary>
-	protected void CollectSerializedGameFiles(string root, List<KeyValuePair<string, string>> files)
+	/// <remarks>
+	/// Files are selected based on the file name, using a regex for level files.
+	/// </remarks>
+	protected void CollectDefaultSerializedFiles(string root, List<KeyValuePair<string, string>> files)
 	{
 		string filePath = FileSystem.Path.Join(root, GlobalGameManagersName);
 		if (MultiFileStream.Exists(filePath, FileSystem))
@@ -213,10 +213,30 @@ public abstract partial class PlatformGameStructure
 		foreach (string levelFile in FileSystem.Directory.EnumerateFiles(root))
 		{
 			string name = FileSystem.Path.GetFileName(levelFile);
-			if (s_levelTemplate.IsMatch(name))
+			if (LevelTemplateRegex.IsMatch(name))
 			{
 				string levelName = MultiFileStream.GetFileName(name);
 				AddFile(files, levelName, levelFile);
+			}
+		}
+	}
+
+	/// <summary>
+	/// Collects all serialized files in the directory
+	/// </summary>
+	/// <remarks>
+	/// The search is top-level only.
+	/// Files are selected based on their file header.
+	/// </remarks>
+	protected void CollectAllSerializedFiles(string root, List<KeyValuePair<string, string>> files)
+	{
+		foreach (string path in FileSystem.Directory.EnumerateFiles(root))
+		{
+			if (SerializedFile.IsSerializedFile(path, FileSystem))
+			{
+				string name = FileSystem.Path.GetFileName(path);
+				string actualName = MultiFileStream.GetFileName(name);
+				AddFile(files, actualName, path);
 			}
 		}
 	}
@@ -382,9 +402,9 @@ public abstract partial class PlatformGameStructure
 			FileSystem.File.Exists(Il2CppMetaDataPath);
 	}
 
-	[GeneratedRegex("^level(0|[1-9][0-9]*)(\\.split0)?$", RegexOptions.Compiled)]
-	private static partial Regex LevelTemplateRegex();
+	[GeneratedRegex("^level(?:0|[1-9][0-9]*)(?:\\.split0)?$", RegexOptions.Compiled)]
+	private static partial Regex LevelTemplateRegex { get; }
 
 	[GeneratedRegex("^sharedassets[0-9]+\\.assets", RegexOptions.Compiled)]
-	private static partial Regex SharedAssetTemplateRegex();
+	private static partial Regex SharedAssetTemplateRegex { get; }
 }

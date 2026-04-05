@@ -181,7 +181,7 @@ public class TextureExportCollection : AssetsExportCollection<ITexture2D>
 				smeta.FillSpriteMetaData(kvp.Key, kvp.Value);
 				if (smeta.Has_InternalID())
 				{
-					smeta.InternalID = ExportIdHandler.GetPseudoRandomValue(index++);
+					smeta.InternalID = ExportIdHandler.GetPseudoRandomValue64(index++);
 				}
 			}
 		}

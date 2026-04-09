@@ -2,6 +2,7 @@ using AssetRipper.Assets;
 using AssetRipper.Assets.Collections;
 using AssetRipper.Export.UnityProjects.Project;
 using AssetRipper.Import.Configuration;
+using AssetRipper.Processing.Configuration;
 using AssetRipper.Processing.Scenes;
 using AssetRipper.SourceGenerated.Classes.ClassID_141;
 using System.Diagnostics;
@@ -18,6 +19,15 @@ public class ProjectAssetContainer : IExportContainer
 		CurrentCollection = null!;
 
 		ExportVersion = options.Version;
+
+		if (options.SingletonData.TryGetStoredValue(nameof(ProcessingSettings), out ProcessingSettings? processingSettings))
+		{
+			m_enableAssetDeduplication = processingSettings.EnableAssetDeduplication;
+		}
+		else
+		{
+			m_enableAssetDeduplication = false;
+		}
 
 		m_buildSettings = assets.OfType<IBuildSettings>().FirstOrDefault();
 
@@ -88,10 +98,12 @@ public class ProjectAssetContainer : IExportContainer
 	public IExportCollection CurrentCollection { get; set; }
 	public AssetCollection File => CurrentCollection.File;
 	public UnityVersion ExportVersion { get; }
+	public bool EnableAssetDeduplication => m_enableAssetDeduplication;
 
 	private readonly ProjectExporter m_exporter;
 	private readonly Dictionary<IUnityObjectBase, IExportCollection> m_assetCollections = new();
 
 	private readonly IBuildSettings? m_buildSettings;
 	private readonly SceneExportCollection[] m_scenes;
+	private readonly bool m_enableAssetDeduplication;
 }

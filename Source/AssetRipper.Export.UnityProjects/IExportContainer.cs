@@ -15,4 +15,5 @@ public interface IExportContainer
 	AssetCollection File { get; }
 
 	UnityVersion ExportVersion { get; }
+	bool EnableAssetDeduplication { get; }
 }

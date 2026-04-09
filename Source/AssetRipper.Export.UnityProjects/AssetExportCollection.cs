@@ -15,11 +15,14 @@ public class AssetExportCollection<T> : ExportCollection where T : IUnityObjectB
 	public override bool Export(IExportContainer container, string projectDirectory, FileSystem fileSystem)
 	{
 		string subPath = fileSystem.Path.Join(projectDirectory, FileSystem.FixInvalidPathCharacters(Asset.GetBestDirectory()));
-		string fileName = GetUniqueFileName(Asset, subPath, fileSystem);
-
-		fileSystem.Directory.Create(subPath);
-
+		string fileName = GetUniqueFileName(container, Asset, subPath, fileSystem);
 		string filePath = fileSystem.Path.Join(subPath, fileName);
+
+		string? directoryPath = fileSystem.Path.GetDirectoryName(filePath);
+		if (directoryPath is not null && !fileSystem.Directory.Exists(directoryPath))
+		{
+			fileSystem.Directory.Create(directoryPath);
+		}
 		bool result = ExportInner(container, filePath, projectDirectory, fileSystem);
 		if (result)
 		{

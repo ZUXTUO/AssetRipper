@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -50,6 +50,53 @@ public partial class FileSystem
 		{
 			Directory.Delete(TemporaryDirectory);
 		}
+	}
+
+	public string GetUniquePathName(string dirPath, string fileName, int maxNameLength)
+	{
+		string? ext = null;
+		string? name = null;
+		string validFileName = fileName;
+		if (Encoding.UTF8.GetByteCount(fileName) > maxNameLength)
+		{
+			ext = Path.GetExtension(validFileName);
+			name = Utf8Truncation.TruncateToUTF8ByteLength(fileName, maxNameLength - Encoding.UTF8.GetByteCount(ext));
+			validFileName = name + ext;
+		}
+
+		if (!Directory.Exists(dirPath))
+		{
+			return validFileName;
+		}
+
+		name ??= Path.GetFileNameWithoutExtension(validFileName);
+		if (!IsReservedName(name))
+		{
+			if (!File.Exists(Path.Join(dirPath, validFileName)))
+			{
+				return validFileName;
+			}
+		}
+
+		ext ??= Path.GetExtension(validFileName);
+
+		string key = Path.Join(dirPath, $"{name}{ext}_Path");
+		UniqueNamesByInitialPath.TryGetValue(key, out int initial);
+		if (initial == 0)
+		{
+			initial = 1;
+		}
+
+		for (int counter = initial; counter < int.MaxValue; counter++)
+		{
+			string proposedName = Path.Join($"{name}_{counter}", validFileName);
+			if (!File.Exists(Path.Join(dirPath, proposedName)))
+			{
+				UniqueNamesByInitialPath[key] = counter;
+				return proposedName;
+			}
+		}
+		throw new Exception($"Can't generate unique name for file {fileName} in directory {dirPath}");
 	}
 
 	public string GetUniqueName(string dirPath, string fileName, int maxNameLength)

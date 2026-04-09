@@ -1,4 +1,4 @@
-﻿using AssetRipper.Assets;
+using AssetRipper.Assets;
 using AssetRipper.Assets.Collections;
 using AssetRipper.Import.AssetCreation;
 using AssetRipper.IO.Files.SerializedFiles;
@@ -39,8 +39,14 @@ public sealed class UnreadableExportCollection : ExportCollection
 		string subPath = fileSystem.Path.GetDirectoryName(resourcePath)!;
 		fileSystem.Directory.Create(subPath);
 		string resFileName = fileSystem.Path.GetFileName(resourcePath);
-		string fileName = GetUniqueFileName(subPath, resFileName, fileSystem);
+		string fileName = GetUniqueFileName(container, subPath, resFileName, fileSystem);
 		string filePath = fileSystem.Path.Join(subPath, fileName);
+
+		string? directoryPath = fileSystem.Path.GetDirectoryName(filePath);
+		if (directoryPath is not null && !fileSystem.Directory.Exists(directoryPath))
+		{
+			fileSystem.Directory.Create(directoryPath);
+		}
 		return AssetExporter.Export(container, Asset, filePath, fileSystem);
 	}
 

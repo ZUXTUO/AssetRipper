@@ -114,7 +114,7 @@ public class TextureExportCollection : AssetsExportCollection<ITexture2D>
 			importer.TextureTypeE = TextureImporterType.Sprite;
 			if (m_exportSprites)
 			{
-				AddSpriteSheet(importer, textureSpriteInformation);
+				AddSpriteSheet(container, importer, textureSpriteInformation);
 				AddIDToName(container, importer, textureSpriteInformation);
 			}
 		}
@@ -134,32 +134,32 @@ public class TextureExportCollection : AssetsExportCollection<ITexture2D>
 			importer.TextureTypeE = TextureImporterType.Sprite;
 			if (m_exportSprites)
 			{
-				AddSpriteSheet(importer, textureSpriteInformation);
+				AddSpriteSheet(container, importer, textureSpriteInformation);
 				AddIDToName(container, importer, textureSpriteInformation);
 			}
 		}
 	}
 
-    private IReadOnlyDictionary<ISprite, ISpriteAtlas?>? GetFilteredSpriteInfo()
-    {
-        SpriteInformationObject? group = (SpriteInformationObject?)Asset.MainAsset;
-        if (group is null)
-        {
-            return null;
-        }
-        var dict = new Dictionary<ISprite, ISpriteAtlas?>();
-        foreach (var kvp in group.Sprites)
-        {
-            var tex = kvp.Key.TryGetTexture();
-            if (tex is not null && tex.AssetInfo == Asset.AssetInfo)
-            {
-                dict[kvp.Key] = kvp.Value;
-            }
-        }
-        return dict.Count > 0 ? dict : group.Sprites;
-    }
+	private IReadOnlyDictionary<ISprite, ISpriteAtlas?>? GetFilteredSpriteInfo()
+	{
+		SpriteInformationObject? group = (SpriteInformationObject?)Asset.MainAsset;
+		if (group is null)
+		{
+			return null;
+		}
+		var dict = new Dictionary<ISprite, ISpriteAtlas?>();
+		foreach (var kvp in group.Sprites)
+		{
+			var tex = kvp.Key.TryGetTexture();
+			if (tex is not null && tex.AssetInfo == Asset.AssetInfo)
+			{
+				dict[kvp.Key] = kvp.Value;
+			}
+		}
+		return dict.Count > 0 ? dict : group.Sprites;
+	}
 
-	private static void AddSpriteSheet(ITextureImporter importer, IReadOnlyDictionary<ISprite, ISpriteAtlas?> textureSpriteInformation)
+	private void AddSpriteSheet(IExportContainer container, ITextureImporter importer, IReadOnlyDictionary<ISprite, ISpriteAtlas?> textureSpriteInformation)
 	{
 		if (!importer.Has_SpriteSheet())
 		{
@@ -173,15 +173,15 @@ public class TextureExportCollection : AssetsExportCollection<ITexture2D>
 		}
 		else
 		{
+			Debug.Assert(importer.SpriteModeE == SpriteImportMode.Multiple);
 			AccessListBase<ISpriteMetaData> spriteSheetSprites = importer.SpriteSheet.Sprites;
-			int index = 0;
 			foreach (KeyValuePair<ISprite, ISpriteAtlas?> kvp in textureSpriteInformation)
 			{
 				ISpriteMetaData smeta = spriteSheetSprites.AddNew();
 				smeta.FillSpriteMetaData(kvp.Key, kvp.Value);
 				if (smeta.Has_InternalID())
 				{
-					smeta.InternalID = ExportIdHandler.GetPseudoRandomValue64(index++);
+					smeta.InternalID = GetExportID(container, kvp.Key);
 				}
 			}
 		}
@@ -195,13 +195,9 @@ public class TextureExportCollection : AssetsExportCollection<ITexture2D>
 			{
 				foreach (ISprite sprite in textureSpriteInformation.Keys)
 				{
-#warning TODO: TEMP:
-					long exportID = GetExportID(container, sprite);
-					ISpriteMetaData smeta = importer.SpriteSheet.GetSpriteMetaData(sprite.Name);
-					smeta.InternalID = exportID;
 					AssetPair<AssetPair<int, long>, Utf8String> pair = importer.InternalIDToNameTable.AddNew();
 					pair.Key.Key = (int)ClassIDType.Sprite;
-					pair.Key.Value = exportID;
+					pair.Key.Value = GetExportID(container, sprite);
 					pair.Value = sprite.Name;
 				}
 			}

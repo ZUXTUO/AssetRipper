@@ -20,12 +20,14 @@ AssetRipper supports Unity versions from `3.5.0` to `6000.5.X`. However, support
 
 There is a premium edition of AssetRipper. This edition includes additional [features and improvements](https://assetripper.github.io/AssetRipper/articles/PremiumFeatures.html).
 
-## Donations
+## Tips
 
-Your support helps maintain and improve AssetRipper. If you find this tool useful, please consider donating:
+Your support helps maintain and improve AssetRipper. If you find this tool useful, please consider tipping:
 
 * [GitHub Sponsors](https://github.com/sponsors/ds5678)
 * [PayPal](https://paypal.me/ds5678)
+* [Buy Me a Coffee](https://buymeacoffee.com/assetripper)
+* [Ko-fi](https://ko-fi.com/assetripper)
 
 ## Discord [![](https://img.shields.io/discord/867514400701153281?color=blue&label=AssetRipper)](https://discord.gg/XqXa53W2Yh)
 

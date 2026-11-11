@@ -103,7 +103,7 @@ public partial class FileSystem
 	{
 		string? ext = null;
 		string? name = null;
-		string validFileName = fileName;
+		string validFileName = FixReservedNames(fileName);
 		if (Encoding.UTF8.GetByteCount(fileName) > maxNameLength)
 		{
 			ext = Path.GetExtension(validFileName);
@@ -156,7 +156,7 @@ public partial class FileSystem
 
 	public static string FixInvalidFileNameCharacters(string path)
 	{
-		return FileNameRegex.Replace(path, "_");
+		return FixReservedNames(FileNameRegex.Replace(path, "_"));
 	}
 
 	private static Regex CreateFileNameRegex()
@@ -189,7 +189,7 @@ public partial class FileSystem
 
 	public static string FixInvalidPathCharacters(string path)
 	{
-		return TrimEntries(PathRegex.Replace(path, "_"));
+		return FixReservedNames(TrimEntries(PathRegex.Replace(path, "_")));
 
 		static string TrimEntries(string path)
 		{
@@ -215,17 +215,15 @@ public partial class FileSystem
 
 	private static Regex PathRegex { get; } = CreatePathRegex();
 
-	public static bool IsReservedName(string name)
+	private static bool IsReservedName(string name)
 	{
-		return OperatingSystem.IsWindows() && name.Length is 3 or 4 && ReservedNames.Contains(name);
+		return ReservedNameRegex().IsMatch(name);
 	}
 
-	private static HashSet<string> ReservedNames { get; } = new(StringComparer.OrdinalIgnoreCase)
-	{
-		"aux", "con", "nul", "prn",
-		"com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
-		"lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
-	};
+	private static string FixReservedNames(string path) => ReservedNameRegex().Replace(path, "${name}_");
+
+	[GeneratedRegex(@"(?<=^|[/\\])\s*(?<name>aux|con|nul|prn|com[1-9]|lpt[1-9])\s*(?=\.|[/\\]|$)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+	private static partial Regex ReservedNameRegex();
 
 	private protected static string GetRandomString() => Guid.NewGuid().ToString();
 }
